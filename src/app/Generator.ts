@@ -4,15 +4,6 @@ import * as _ from "underscore";
 @Injectable()
 export class Generator {
 
-  constructor() {
-    String.prototype.formatUnicorn = function () {
-      let args = arguments;
-      return this.replace(/{(\d+)}/g, (match, number) => {
-        return typeof args[number] != 'undefined' ? args[number] : match;
-      });
-    };
-  }
-
   public generateTemplate(fileContents: String): string {
     let declarationsRegexp = /function\((.*)\)/;
     let invokationsRegexpTemplate = '{0}{1}\\.\\w*';
