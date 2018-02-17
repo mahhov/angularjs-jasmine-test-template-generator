@@ -6,7 +6,7 @@ export class Generator {
 
   public generateTemplate(fileContents: String): string {
     let declarationsRegexp = /function\((.*)\)/;
-    let invokationsRegexpTemplate = '{0}{1}\\.\\w*';
+    let invocationsRegexpTemplate = '{0}{1}\\.\\w*';
     let methodRegexp = /\.(\w*)/;
     let commaListTemplate = '{0}, {1}';
     let newlineListTemplate = '{0}\n{1}';
@@ -28,10 +28,10 @@ export class Generator {
     });
 
     _.each(injections, injection => {
-      let regexp = RegExp(invokationsRegexpTemplate.formatUnicorn(injection.name[0] === '$' ? '\\' : '', injection.name), 'g');
-      let invokations = fileContents.match(regexp);
-      injection.methods = _.map(invokations, invokation => {
-        return invokation.match(methodRegexp)[1]
+      let regexp = RegExp(invocationsRegexpTemplate.formatUnicorn(injection.name[0] === '$' ? '\\' : '', injection.name), 'g');
+      let invocations = fileContents.match(regexp);
+      injection.methods = _.map(invocations, invocation => {
+        return invocation.match(methodRegexp)[1]
       });
     });
 
