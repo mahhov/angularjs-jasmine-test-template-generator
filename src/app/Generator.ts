@@ -3,19 +3,19 @@ import * as _ from "underscore";
 
 @Injectable()
 export class Generator {
-  private declarationsRegexp: string = /function\((.*)\)/;
-  private invocationsRegexpTemplate: string = '{0}{1}\\.\\w*\\(';
-  private methodRegexp: string = /\.(\w*)/;
-  private commaListTemplate: string = '{0}, {1}';
-  private newlineListTemplate: string = '{0}\n{1}';
-  private varDeclarationTemplate: string = 'var {0};';
-  private quoteTemplate: string = "'{0}'";
-  private provideBodyTemplate: string = "\t$provide.value('{0}', {0} = jasmine.createSpyObj('{0}', [{1}]));";
-  private provideBodyConstTemplate: string = "\t$provide.value('{0}', {0} = {});";
-  private providePrefix: string = 'beforeEach(module(function($provide) {';
-  private provideSuffix: string = '}));';
-  private provideTemplate: string = '{0}\n{1}\n{2}';
-  private testTemplate: string = '{0}\n\n{1}';
+  private readonly declarationsRegexp: string = /function\((.*)\)/;
+  private readonly invocationsRegexpTemplate: string = '{0}{1}\\.\\w*\\(';
+  private readonly methodRegexp: string = /\.(\w*)/;
+  private readonly commaListTemplate: string = '{0}, {1}';
+  private readonly newlineListTemplate: string = '{0}\n{1}';
+  private readonly varDeclarationTemplate: string = 'var {0};';
+  private readonly quoteTemplate: string = "'{0}'";
+  private readonly provideBodyTemplate: string = "\t$provide.value('{0}', {0} = jasmine.createSpyObj('{0}', [{1}]));";
+  private readonly provideBodyConstTemplate: string = "\t$provide.value('{0}', {0} = {});";
+  private readonly providePrefix: string = 'beforeEach(module(function($provide) {';
+  private readonly provideSuffix: string = '}));';
+  private readonly provideTemplate: string = '{0}\n{1}\n{2}';
+  private readonly testTemplate: string = '{0}\n\n{1}';
 
   public generateTemplate(fileContents: string): string {
     if (!fileContents)
