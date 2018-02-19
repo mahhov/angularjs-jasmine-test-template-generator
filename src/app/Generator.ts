@@ -11,23 +11,20 @@ export class Generator {
 
     if (!fileContents)
       return;
-
     let injections = this.getInjections(fileContents);
-
     if (!injections)
       return;
 
     let provideDeclarations = this.getProvideDeclarations(injections);
-
     let provide = this.getProvideBody(injections);
 
     return testTemplate.formatUnicorn(provideDeclarations, provide);
   }
 
   private getInjections(fileContents: string) {
-    let declarationsRegexp: string = /function\((.*)\)/;
+    let declarationsRegexp = /function\((.*)\)/;
     let invocationsRegexpTemplate: string = '{0}{1}\\.\\w*\\(';
-    let methodRegexp: string = /\.(\w*)/;
+    let methodRegexp = /\.(\w*)/;
 
     let declaration = fileContents.match(declarationsRegexp);
 
