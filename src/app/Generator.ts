@@ -186,7 +186,6 @@ export class Generator {
           return this.spacelineListTemplate.formatUnicorn(aggregate, paramAssignment);
         });
         return constructorDirectiveBodyTemplate.formatUnicorn(injections.name, directiveTemplateBody);
-        break;
       case 'controller':
         return constructorControllerBodyTemplate.formatUnicorn(injections.name);
       default:
