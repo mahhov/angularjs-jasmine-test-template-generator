@@ -1,9 +1,19 @@
+.full-height {
+  height: 100vh;
+  padding: 20px;
+  padding-bottom: 80px
+}
+
+.full-row {
+  height: 100%;
+}
+
 textarea {
   margin-left: 20px;
-  height: 800px
 }
 
 pre {
+  height: 100%;
   margin-left: 20px;
   margin-right: 20px;
   background-color: whitesmoke;
@@ -11,5 +21,5 @@ pre {
 
 button {
   margin-top: 20px;
-  margin-left: 20px
+  margin-left: 20px;
 }
