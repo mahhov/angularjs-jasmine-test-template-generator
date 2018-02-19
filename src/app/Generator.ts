@@ -8,7 +8,7 @@ export class Generator {
   private readonly declarationTemplate: string = 'var {0};';
 
   public generateTemplate(fileContents: string): string {
-    let testTemplate: string = "'use strict';\n\ndescribe('{0}', function () {\n\t{1}\n\t{2}\n\n\t{3}\n\n{4}\n\n{5}\n});";
+    let testTemplate: string = "'use strict';\n\ndescribe('{0}', function () {\n\t{1}\n\t{2}\n\n\t{3}\n\n{4}\n\n{5}\n\n{6}\n});";
 
     if (!fileContents)
       return;
@@ -19,27 +19,27 @@ export class Generator {
       return;
 
     let promises = this.getPromises(injections);
+    let methods = this.getMethods(fileContents);
 
     let module = this.getModule(injections);
-
     let provideDeclarations = this.getProvideDeclarations(injections);
     let provideBody = this.getProvideBody(injections);
-
     let promiseDeclarations = this.getPromiseDeclarations(promises);
     let promiseBody = this.getPromiseBody(promises);
+    let describes = this.getDescribes(methods);
 
-    return testTemplate.formatUnicorn(injections.name, provideDeclarations, promiseDeclarations, module, provideBody, promiseBody);
+    return testTemplate.formatUnicorn(injections.name, provideDeclarations, promiseDeclarations, module, provideBody, promiseBody, describes);
   }
 
   private getInjections(fileContents: string) {
-    let declarationsRegexp = /angular\.module\('(\w*).(\w*)'\).(\w*)\('(\w*)',\s*function\((.*)\)/;
+    let declarationRegexp = /angular\.module\('(\w*).(\w*)'\).(\w*)\('(\w*)',\s*function\((.*)\)/;
     let moduleNameTemplate: string = '{0}.{1}';
     let serviceNameTemplate: string = '{0}{1}';
     let invocationsRegexpTemplate: string = '{0}\\.\\w*\\(';
     let promiseInvocationRegexpTemplate: string = '{0}\\.{1}\\([\\w, ]*\\)\\.then\\(';
     let methodRegexp = /\.(\w*)/;
 
-    let declaration = fileContents.match(declarationsRegexp);
+    let declaration = fileContents.match(declarationRegexp);
 
     if (!declaration || declaration.length < 6)
       return;
@@ -84,6 +84,17 @@ export class Generator {
     }));
   }
 
+  private getMethods(fileContents: string) {
+    let methodRegexp = /(this|scope)\.(\w*) = function/;
+    let methodRegexpGlobal = RegExp(methodRegexp, 'g');
+
+    let methods = fileContents.match(methodRegexpGlobal);
+
+    return _.map(methods, method => {
+      return method.match(methodRegexp)[2];
+    });
+  }
+
   private getModule(injections) {
     let moduleTemplate = "beforeEach(module('{0}'));";
     let directiveModuleTemplate = "beforeEach(module('{0}', 'template'));";
@@ -103,7 +114,7 @@ export class Generator {
     let quoteTemplate: string = "'{0}'";
     let provideBodyTemplate: string = "\t\t$provide.value('{0}', {0} = jasmine.createSpyObj('{0}', [{1}]));";
     let provideBodyConstTemplate: string = "\t\t$provide.value('{0}', {0} = {});";
-    let provideTemplate: string = '\tbeforeEach(module(function($provide) {\n{0}\n\t}));';
+    let provideTemplate: string = '\tbeforeEach(module(function ($provide) {\n{0}\n\t}));';
 
     let provideBodyLines = _.map(injections, injection => {
       let quotedMethods = _.map(injection.methods, method => {
@@ -132,7 +143,7 @@ export class Generator {
 
   private getPromiseBody(promises) {
     let promiseBodyTemplate: string = '\t\t{0} = $q.defer();\n\t\t{1}.{2}.and.returnValue({0}.promise);';
-    let promiseTemplate: string = '\tbeforeEach(inject(function($q) {\n{0}\n\t}));';
+    let promiseTemplate: string = '\tbeforeEach(inject(function ($q) {\n{0}\n\t}));';
 
     let promiseBodyLines = _.map(promises, promise => {
       return promiseBodyTemplate.formatUnicorn(promise.defer, promise.object, promise.method);
@@ -142,9 +153,18 @@ export class Generator {
     });
     return promiseTemplate.formatUnicorn(promiseBody);
   }
+
+  private getDescribes(methods) {
+    let describeTemplate: string = "\tdescribe('#{0}', function () {\n\t});";
+
+    return _.reduce(_.map(methods, (method) => {
+      return describeTemplate.formatUnicorn(method);
+    }), (aggregate, describe) => {
+      return '{0}\n\n{1}'.formatUnicorn(aggregate, describe);
+    });
+  }
 }
 
 // todo
 // suport new line / whitespace trim
-// describes per method
 // constructor based on service / ctrl / dir / factory
