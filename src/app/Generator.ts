@@ -5,6 +5,7 @@ import * as _ from "underscore";
 export class Generator {
   private readonly commaListTemplate: string = '{0}, {1}';
   private readonly newlineListTemplate: string = '{0}\n{1}';
+  private readonly spacelineListTemplate: string = '{0} {1}';
   private readonly declarationTemplate: string = 'var {0};';
 
   public generateTemplate(fileContents: string): string {
@@ -27,7 +28,7 @@ export class Generator {
     let promiseDeclarations = this.getPromiseDeclarations(promises);
     let promiseBody = this.getPromiseBody(promises);
     let constructorDeclaration = this.getConstructorDeclaration(injections);
-    let constructorBody = this.getConstructorBody(injections);
+    let constructorBody = this.getConstructorBody(fileContents, injections);
     let describes = this.getDescribes(methods);
 
     return testTemplate.formatUnicorn(injections.name, provideDeclarations, promiseDeclarations, constructorDeclaration, module, provideBody, promiseBody, constructorBody, describes);
@@ -104,6 +105,15 @@ export class Generator {
     return injections.componentType === 'directive' ? directiveModuleTemplate.formatUnicorn(injections.module) : moduleTemplate.formatUnicorn(injections.module);
   }
 
+  private getDirectiveParams(fileContents: string) { // todo fix
+    let paramRegexp = /scope: {(.|\n)*?}/;
+
+    let paramsBlock = fileContents.match(paramRegexp)[0];
+    return _.map(_.rest(paramsBlock.match(/(\w*):/g)), param => {
+      return param.match(/(\w*):/)[1];
+    });
+  }
+
   private getProvideDeclarations(injections) {
     let names = _.pluck(injections, 'name');
     let declarationBody = _.reduce(names, (aggregate, name) => {
@@ -161,14 +171,21 @@ export class Generator {
     return constructorDeclarationTemplate.formatUnicorn(injections.componentType === 'directive' || injections.componentType === 'controller' ? 'scope' : injections.name);
   }
 
-  private getConstructorBody(injections) {
+  private getConstructorBody(fileContents, injections) {
     let constructorBodyTemplate: string = '\tbeforeEach(inject(function (_{0}_) {\n\t\t{0} = _{0}_\n\t}));';
     let constructorControllerBodyTemplate: string = "\tbeforeEach(inject(function ($rootScope, $controller) {\n\t\tscope = $rotScope.$new();\n\t\t$controller('{0}', {\n\t\t\t$scope: scope\n\t\t});\n\t}));";
-    let constructorDirectiveBodyTemplate: string = "\tbeforeEach(inject(function ($rootScope, $compile) {\n\t\tvar template = '<{0}></{0}>';\n\t\tvar directive = $compile(template)($rootScope);\n\t\t$rootScope.$digest();\n\t\tscope = directive.isolateScope()\n\t}));";
+    let constructorDirectiveBodyTemplate: string = "\tbeforeEach(inject(function ($rootScope, $compile) {\n\t\tvar template = '<{0} {1}></{0}>';\n\t\tvar directive = $compile(template)($rootScope);\n\t\t$rootScope.$digest();\n\t\tscope = directive.isolateScope()\n\t}));";
 
     switch (injections.componentType) {
       case 'directive':
-        return constructorDirectiveBodyTemplate.formatUnicorn(injections.name);
+        let directiveParams = this.getDirectiveParams(fileContents);
+        let directiveParamAssignments = _.map(directiveParams, directiveParam => {
+          return '{0}=""'.formatUnicorn(directiveParam);
+        });
+        let directiveTemplateBody = _.reduce(directiveParamAssignments, (aggregate, paramAssignment) => {
+          return this.spacelineListTemplate.formatUnicorn(aggregate, paramAssignment);
+        });
+        return constructorDirectiveBodyTemplate.formatUnicorn(injections.name, directiveTemplateBody);
         break;
       case 'controller':
         return constructorControllerBodyTemplate.formatUnicorn(injections.name);
@@ -190,4 +207,3 @@ export class Generator {
 
 // todo
 // suport new line / whitespace trim
-// directive constructor for template params
