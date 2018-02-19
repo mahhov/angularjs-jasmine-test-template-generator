@@ -1,9 +1,15 @@
 <div class="full-height">
   <div class="row full-row">
-    <textarea class="col" (keyup)="update()" [(ngModel)]="fileContents"></textarea>
-    <pre id="output" class="col">{{test}}</pre>
+    <div class="col">
+      <textarea (keyup)="update()" [(ngModel)]="fileContents"></textarea>
+    </div>
+    <div class="col">
+      <pre id="output">{{test}}</pre>
+    </div>
   </div>
   <div class="row">
-    <button class="btn btn-primary" (click)="copy()">Copy</button>
+    <div class="col-6 offset-6">
+      <button class="btn btn-primary" (click)="copy()">Copy</button>
+    </div>
   </div>
 </div>
