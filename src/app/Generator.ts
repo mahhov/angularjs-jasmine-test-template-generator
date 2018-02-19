@@ -8,19 +8,25 @@ export class Generator {
   private readonly declarationTemplate: string = 'var {0};';
 
   public generateTemplate(fileContents: string): string {
-    let testTemplate: string = "'use strict';\n\ndescribe('{0}', function () {\n\t{1}\n\t{2}\n\n{3}\n\n});";
+    let testTemplate: string = "'use strict';\n\ndescribe('{0}', function () {\n\t{1}\n\t{2}\n\n{3}\n\n{4}\n});";
 
     if (!fileContents)
       return;
+
     let injections = this.getInjections(fileContents);
+
     if (!injections)
       return;
 
-    let provideDeclarations = this.getProvideDeclarations(injections);
-    let provide = this.getProvideBody(injections);
-    let promiseDeclarations = this.getPromiseDeclarations(injections);
+    let promises = this.getPromises(injections);
 
-    return testTemplate.formatUnicorn(injections.name, provideDeclarations, promiseDeclarations, provide);
+    let provideDeclarations = this.getProvideDeclarations(injections);
+    let provideBody = this.getProvideBody(injections);
+
+    let promiseDeclarations = this.getPromiseDeclarations(promises);
+    let promiseBody = this.getPromiseBody(promises);
+
+    return testTemplate.formatUnicorn(injections.name, provideDeclarations, promiseDeclarations, provideBody, promiseBody);
   }
 
   private getInjections(fileContents: string) {
@@ -87,21 +93,42 @@ export class Generator {
     return provideTemplate.formatUnicorn(provideBody);
   }
 
-  private getPromiseDeclarations(injections) {
+  private getPromises(injections) {
     let deferTemplate: string = '{0}Defer';
 
-    let promiseMethods = _.map(_.pluck(_.filter(_.flatten(_.pluck(injections, 'methods')), method => {
-      return method.isPromise
-    }), 'name'), name => {
-      return deferTemplate.formatUnicorn(name);
-    });
+    return _.flatten(_.map(injections, injection => {
+      return _.map(_.filter(injection.methods, method => {
+        return method.isPromise;
+      }), method => {
+        return {method: method.name, object: injection.name, defer: deferTemplate.formatUnicorn(method.name)};
+      })
+    }));
+  }
 
-    let declarationBody = _.reduce(promiseMethods, (aggregate, method) => {
-      return this.commaListTemplate.formatUnicorn(aggregate, metho);
+  private getPromiseDeclarations(promises) {
+    let declarationBody = _.reduce(_.pluck(promises, 'defer'), (aggregate, declaration) => {
+      return this.commaListTemplate.formatUnicorn(aggregate, declaration);
     });
 
     return this.declarationTemplate.formatUnicorn(declarationBody);
   }
+
+  private getPromiseBody(promises) {
+    let promiseBodyTemplate: string = '\t\t{0} = $q.defer();\n\t\t{1}.{2}.and.returnValue({0}.promise);';
+    let promiseTemplate: string = '\tbeforeEach(inject(function($q) {\n{0}\n\t}));';
+
+    let promiseBodyLines = _.map(promises, promise => {
+      return promiseBodyTemplate.formatUnicorn(promise.defer, promise.object, promise.method);
+    });
+    let promiseBody = _.reduce(promiseBodyLines, (aggregate, line) => {
+      return this.newlineListTemplate.formatUnicorn(aggregate, line);
+    });
+    return promiseTemplate.formatUnicorn(promiseBody);
+  }
 }
 
-// todo suport new line / whitespace trim
+// todo
+// suport new line / whitespace trim
+// module
+// describes per method
+// constructor based on service / ctrl / dir / factory
