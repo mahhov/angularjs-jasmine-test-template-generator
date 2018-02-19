@@ -24,7 +24,7 @@ export class Generator {
   }
 
   private getInjections(fileContents: string) {
-    let declarationsRegexp = /function\((.*)\)/;
+    let declarationsRegexp = /'(\w*)',\s*function\((.*)\)/;
     let serviceNameTemplate: string = '{0}{1}';
     let invocationsRegexpTemplate: string = '{0}\\.\\w*\\(';
     let promiseInvocationRegexpTemplate: string = '{0}\\.{1}\\([\\w, ]*\\)\\.then\\(';
@@ -32,10 +32,10 @@ export class Generator {
 
     let declaration = fileContents.match(declarationsRegexp);
 
-    if (!declaration || !declaration[1])
+    if (!declaration || !declaration[2])
       return;
 
-    let injections = _.map(declaration[1].split(', '), component => {
+    let injections = _.map(declaration[2].split(', '), component => {
       return {name: component, methods: []};
     });
 
@@ -51,7 +51,7 @@ export class Generator {
       });
     });
 
-    injections.name = 'x';
+    injections.name = declaration[1];
 
     return injections;
   }
