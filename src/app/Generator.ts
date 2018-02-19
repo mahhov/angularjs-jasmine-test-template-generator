@@ -8,7 +8,7 @@ export class Generator {
   private readonly declarationTemplate: string = 'var {0};';
 
   public generateTemplate(fileContents: string): string {
-    let testTemplate: string = "'use strict';\n\ndescribe('{0}', function () {\n\t{1}\n\t{2}\n\n{3}\n\n{4}\n});";
+    let testTemplate: string = "'use strict';\n\ndescribe('{0}', function () {\n\t{1}\n\t{2}\n\n\t{3}\n\n{4}\n\n{5}\n});";
 
     if (!fileContents)
       return;
@@ -20,13 +20,15 @@ export class Generator {
 
     let promises = this.getPromises(injections);
 
+    let module = this.getModule(injections);
+
     let provideDeclarations = this.getProvideDeclarations(injections);
     let provideBody = this.getProvideBody(injections);
 
     let promiseDeclarations = this.getPromiseDeclarations(promises);
     let promiseBody = this.getPromiseBody(promises);
 
-    return testTemplate.formatUnicorn(injections.name, provideDeclarations, promiseDeclarations, provideBody, promiseBody);
+    return testTemplate.formatUnicorn(injections.name, provideDeclarations, promiseDeclarations, module, provideBody, promiseBody);
   }
 
   private getInjections(fileContents: string) {
@@ -70,6 +72,25 @@ export class Generator {
     return injections;
   }
 
+  private getPromises(injections) {
+    let deferTemplate: string = '{0}Defer';
+
+    return _.flatten(_.map(injections, injection => {
+      return _.map(_.filter(injection.methods, method => {
+        return method.isPromise;
+      }), method => {
+        return {method: method.name, object: injection.name, defer: deferTemplate.formatUnicorn(method.name)};
+      })
+    }));
+  }
+
+  private getModule(injections) {
+    let moduleTemplate = "beforeEach(module('{0}'));";
+    let directiveModuleTemplate = "beforeEach(module('{0}', 'template'));";
+
+    return injections.componentType === 'directive' ? directiveModuleTemplate.formatUnicorn(injections.module) : moduleTemplate.formatUnicorn(injections.module);
+  }
+
   private getProvideDeclarations(injections) {
     let names = _.pluck(injections, 'name');
     let declarationBody = _.reduce(names, (aggregate, name) => {
@@ -101,18 +122,6 @@ export class Generator {
     return provideTemplate.formatUnicorn(provideBody);
   }
 
-  private getPromises(injections) {
-    let deferTemplate: string = '{0}Defer';
-
-    return _.flatten(_.map(injections, injection => {
-      return _.map(_.filter(injection.methods, method => {
-        return method.isPromise;
-      }), method => {
-        return {method: method.name, object: injection.name, defer: deferTemplate.formatUnicorn(method.name)};
-      })
-    }));
-  }
-
   private getPromiseDeclarations(promises) {
     let declarationBody = _.reduce(_.pluck(promises, 'defer'), (aggregate, declaration) => {
       return this.commaListTemplate.formatUnicorn(aggregate, declaration);
@@ -137,6 +146,5 @@ export class Generator {
 
 // todo
 // suport new line / whitespace trim
-// module
 // describes per method
 // constructor based on service / ctrl / dir / factory
