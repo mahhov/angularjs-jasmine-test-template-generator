@@ -5,6 +5,7 @@ import * as _ from "underscore";
 export class Generator {
   private readonly commaListTemplate: string = '{0}, {1}';
   private readonly newlineListTemplate: string = '{0}\n{1}';
+  private readonly doubleNewlineListTemplate: string = '{0}\n\n{1}';
   private readonly spacelineListTemplate: string = '{0} {1}';
   private readonly declarationTemplate: string = 'var {0};';
 
@@ -202,7 +203,7 @@ export class Generator {
     return _.reduce(_.map(methods, (method) => {
       return describeTemplate.formatUnicorn(method);
     }), (aggregate, describe) => {
-      return '{0}\n\n{1}'.formatUnicorn(aggregate, describe);
+      return this.doubleNewlineListTemplate.formatUnicorn(aggregate, describe);
     });
   }
 }
