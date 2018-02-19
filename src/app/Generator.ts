@@ -8,7 +8,7 @@ export class Generator {
   private readonly declarationTemplate: string = 'var {0};';
 
   public generateTemplate(fileContents: string): string {
-    let testTemplate: string = "'use strict';\n\ndescribe('{0}', function () {\n\t{1}\n\t{2}\n\n\t{3}\n\n{4}\n\n{5}\n\n{6}\n});";
+    let testTemplate: string = "'use strict';\n\ndescribe('{0}', function () {\n\t{1}\n\t{2}\n\t{3}\n\n\t{4}\n\n{5}\n\n{6}\n\n{7}\n\n{8}\n});";
 
     if (!fileContents)
       return;
@@ -26,9 +26,11 @@ export class Generator {
     let provideBody = this.getProvideBody(injections);
     let promiseDeclarations = this.getPromiseDeclarations(promises);
     let promiseBody = this.getPromiseBody(promises);
+    let constructorDeclaration = this.getConstructorDeclaration(injections);
+    let constructorBody = this.getConstructorBody(injections);
     let describes = this.getDescribes(methods);
 
-    return testTemplate.formatUnicorn(injections.name, provideDeclarations, promiseDeclarations, module, provideBody, promiseBody, describes);
+    return testTemplate.formatUnicorn(injections.name, provideDeclarations, promiseDeclarations, constructorDeclaration, module, provideBody, promiseBody, constructorBody, describes);
   }
 
   private getInjections(fileContents: string) {
@@ -154,6 +156,27 @@ export class Generator {
     return promiseTemplate.formatUnicorn(promiseBody);
   }
 
+  private getConstructorDeclaration(injections) {
+    let constructorDeclarationTemplate: string = 'var {0};';
+    return constructorDeclarationTemplate.formatUnicorn(injections.componentType === 'directive' || injections.componentType === 'controller' ? 'scope' : injections.name);
+  }
+
+  private getConstructorBody(injections) {
+    let constructorBodyTemplate: string = '\tbeforeEach(inject(function (_{0}_) {\n\t\t{0} = _{0}_\n\t}));';
+    let constructorControllerBodyTemplate: string = "\tbeforeEach(inject(function ($rootScope, $controller) {\n\t\tscope = $rotScope.$new();\n\t\t$controller('{0}', {\n\t\t\t$scope: scope\n\t\t});\n\t}));";
+    let constructorDirectiveBodyTemplate: string = "\tbeforeEach(inject(function ($rootScope, $compile) {\n\t\tvar template = '<{0}></{0}>';\n\t\tvar directive = $compile(template)($rootScope);\n\t\t$rootScope.$digest();\n\t\tscope = directive.isolateScope()\n\t}));";
+
+    switch (injections.componentType) {
+      case 'directive':
+        return constructorDirectiveBodyTemplate.formatUnicorn(injections.name);
+        break;
+      case 'controller':
+        return constructorControllerBodyTemplate.formatUnicorn(injections.name);
+      default:
+        return constructorBodyTemplate.formatUnicorn(injections.name);
+    }
+  }
+
   private getDescribes(methods) {
     let describeTemplate: string = "\tdescribe('#{0}', function () {\n\t});";
 
@@ -167,4 +190,4 @@ export class Generator {
 
 // todo
 // suport new line / whitespace trim
-// constructor based on service / ctrl / dir / factory
+// directive constructor for template params
