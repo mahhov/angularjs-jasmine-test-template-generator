@@ -39,13 +39,13 @@ export class Generator {
   }
 
   private getInjections(fileContents: string) {
-    let declarationRegex = /angular\.module\('(\w*).(\w*)'\).(\w*)\('(\w*)',function\((.*?)\)/;
+    let declarationRegex = /angular\.module\('(\w+).(\w+)'\)\.(\w+)\('(\w+)',function\((.*?)\)/;
     let moduleNameTemplate: string = '{0}.{1}';
     let serviceNameTemplate: string = '{0}{1}';
     let commaSplitRegex = /(\w+)/g;
-    let invocationsRegexTemplate: string = '{0}\\.\\w*\\(';
+    let invocationsRegexTemplate: string = '{0}\\.\\w+\\(';
     let promiseInvocationRegexTemplate: string = '{0}\\.{1}\\([\\w,]*\\)\\.then\\(';
-    let methodRegex = /\.(\w*)/;
+    let methodRegex = /\.(\w+)/;
 
     let declaration = fileContents.match(declarationRegex);
 
@@ -93,7 +93,7 @@ export class Generator {
   }
 
   private getMethods(fileContents: string) {
-    let methodRegex = /(this|scope)\.(\w*)=function/;
+    let methodRegex = /(this|scope)\.(\w+)=function/;
     let methodRegexGlobal = RegExp(methodRegex, 'g');
 
     let methods = fileContents.match(methodRegexGlobal);
@@ -111,8 +111,8 @@ export class Generator {
   }
 
   private getDirectiveParams(fileContents: string) {
-    let paramBlockRegex = /scope:{(.|\n)*?}/;
-    let paramLineRegex = /(\w*):/;
+    let paramBlockRegex = /scope:{.*?}/;
+    let paramLineRegex = /(\w+):/;
     let paramLineRegexGlobal = RegExp(paramLineRegex, 'g');
 
     let paramsBlock = fileContents.match(paramBlockRegex)[0];
@@ -211,6 +211,3 @@ export class Generator {
     });
   }
 }
-
-// todo
-// todo * -> +
