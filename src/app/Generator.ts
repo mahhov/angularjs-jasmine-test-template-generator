@@ -44,7 +44,7 @@ export class Generator {
       let regexp = RegExp(invocationsRegexpTemplate.formatUnicorn(serviceName), 'g');
       let invocations = fileContents.match(regexp);
 
-      injection.methods = _.map(invocations, invocation => {
+      injection.methods = _.map(_.unique(invocations), invocation => {
         let method = invocation.match(methodRegexp)[1];
         let isPromise = !!fileContents.match(RegExp(promiseInvocationRegexpTemplate.formatUnicorn(serviceName, method)));
         return {name: method, isPromise: isPromise};
@@ -104,6 +104,4 @@ export class Generator {
   }
 }
 
-
-// todo uniques
 // todo suport new line / whitespace trim
