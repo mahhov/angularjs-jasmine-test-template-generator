@@ -1,0 +1,15 @@
+textarea {
+  margin-left: 20px;
+  height: 800px
+}
+
+pre {
+  margin-left: 20px;
+  margin-right: 20px;
+  background-color: whitesmoke;
+}
+
+button {
+  margin-top: 20px;
+  margin-left: 20px
+}
