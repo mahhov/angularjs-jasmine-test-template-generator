@@ -168,7 +168,7 @@ export class Generator {
       return promiseBodyTemplate.formatUnicorn(promise.defer, promise.object, promise.method);
     });
     let promiseBody = _.reduce(promiseBodyLines, (aggregate, line) => {
-      return this.newlineListTemplate.formatUnicorn(aggregate, line);
+      return this.doubleNewlineListTemplate.formatUnicorn(aggregate, line);
     });
     return promiseTemplate.formatUnicorn(promiseBody);
   }
