@@ -181,8 +181,9 @@ export class Generator {
   private getConstructorBody(fileContents, injections) {
     let constructorBodyTemplate: string = '\tbeforeEach(inject(function (_{0}_) {\n\t\t{0} = _{0}_\n\t}));';
     let constructorControllerBodyTemplate: string = "\tbeforeEach(inject(function ($rootScope, $controller) {\n\t\tscope = $rotScope.$new();\n\t\t$controller('{0}', {\n\t\t\t$scope: scope\n\t\t});\n\t}));";
-    let constructorDirectiveBodyTemplate: string = "\tbeforeEach(inject(function ($rootScope, $compile) {\n\t\tvar template = '<{0} {1}></{0}>';\n\t\tvar directive = $compile(template)($rootScope);\n\t\t$rootScope.$digest();\n\t\tscope = directive.isolateScope()\n\t}));";
+    let constructorDirectiveBodyTemplate: string = "\tbeforeEach(inject(function ($rootScope, $compile) {\n\t\tvar template = '<{0}{1}></{0}>';\n\t\tvar directive = $compile(template)($rootScope);\n\t\t$rootScope.$digest();\n\t\tscope = directive.isolateScope()\n\t}));";
     let directiveParamTemplate = '{0}=""';
+    let leadingSpaceTemplate = ' {0}';
 
     switch (injections.componentType) {
       case 'directive':
@@ -193,7 +194,7 @@ export class Generator {
         let directiveTemplateBody = _.reduce(directiveParamAssignments, (aggregate, paramAssignment) => {
           return this.spacelineListTemplate.formatUnicorn(aggregate, paramAssignment);
         });
-        return constructorDirectiveBodyTemplate.formatUnicorn(injections.name, directiveTemplateBody);
+        return constructorDirectiveBodyTemplate.formatUnicorn(injections.name, directiveTemplateBody ? leadingSpaceTemplate.formatUnicorn(directiveTemplateBody) : '');
       case 'controller':
         return constructorControllerBodyTemplate.formatUnicorn(injections.name);
       default:
