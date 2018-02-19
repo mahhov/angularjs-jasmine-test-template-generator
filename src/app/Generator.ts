@@ -35,14 +35,14 @@ export class Generator {
   }
 
   private getInjections(fileContents: string) {
-    let declarationRegexp = /angular\.module\('(\w*).(\w*)'\).(\w*)\('(\w*)',\s*function\((.*)\)/;
+    let declarationRegex = /angular\.module\('(\w*).(\w*)'\).(\w*)\('(\w*)',\s*function\((.*)\)/;
     let moduleNameTemplate: string = '{0}.{1}';
     let serviceNameTemplate: string = '{0}{1}';
-    let invocationsRegexpTemplate: string = '{0}\\.\\w*\\(';
-    let promiseInvocationRegexpTemplate: string = '{0}\\.{1}\\([\\w, ]*\\)\\.then\\(';
-    let methodRegexp = /\.(\w*)/;
+    let invocationsRegexTemplate: string = '{0}\\.\\w*\\(';
+    let promiseInvocationRegexTemplate: string = '{0}\\.{1}\\([\\w, ]*\\)\\.then\\(';
+    let methodRegex = /\.(\w*)/;
 
-    let declaration = fileContents.match(declarationRegexp);
+    let declaration = fileContents.match(declarationRegex);
 
     if (!declaration || declaration.length < 6)
       return;
@@ -58,12 +58,12 @@ export class Generator {
 
     _.each(injections, injection => {
       let serviceName = serviceNameTemplate.formatUnicorn(injection.name[0] === '$' ? '\\' : '', injection.name);
-      let regexp = RegExp(invocationsRegexpTemplate.formatUnicorn(serviceName), 'g');
-      let invocations = fileContents.match(regexp);
+      let invocationsRegex = RegExp(invocationsRegexTemplate.formatUnicorn(serviceName), 'g');
+      let invocations = fileContents.match(invocationsRegex);
 
       injection.methods = _.map(_.unique(invocations), invocation => {
-        let method = invocation.match(methodRegexp)[1];
-        let isPromise = !!fileContents.match(RegExp(promiseInvocationRegexpTemplate.formatUnicorn(serviceName, method)));
+        let method = invocation.match(methodRegex)[1];
+        let isPromise = !!fileContents.match(RegExp(promiseInvocationRegexTemplate.formatUnicorn(serviceName, method)));
         return {name: method, isPromise: isPromise};
       });
     });
@@ -88,13 +88,13 @@ export class Generator {
   }
 
   private getMethods(fileContents: string) {
-    let methodRegexp = /(this|scope)\.(\w*) = function/;
-    let methodRegexpGlobal = RegExp(methodRegexp, 'g');
+    let methodRegex = /(this|scope)\.(\w*) = function/;
+    let methodRegexGlobal = RegExp(methodRegex, 'g');
 
-    let methods = fileContents.match(methodRegexpGlobal);
+    let methods = fileContents.match(methodRegexGlobal);
 
     return _.map(methods, method => {
-      return method.match(methodRegexp)[2];
+      return method.match(methodRegex)[2];
     });
   }
 
@@ -105,12 +105,14 @@ export class Generator {
     return injections.componentType === 'directive' ? directiveModuleTemplate.formatUnicorn(injections.module) : moduleTemplate.formatUnicorn(injections.module);
   }
 
-  private getDirectiveParams(fileContents: string) { // todo fix
-    let paramRegexp = /scope: {(.|\n)*?}/;
+  private getDirectiveParams(fileContents: string) {
+    let paramBlockRegex = /scope: {(.|\n)*?}/;
+    let paramLineRegex = /(\w*):/;
+    let paramLineRegexGlobal = RegExp(paramLineRegex, 'g');
 
-    let paramsBlock = fileContents.match(paramRegexp)[0];
-    return _.map(_.rest(paramsBlock.match(/(\w*):/g)), param => {
-      return param.match(/(\w*):/)[1];
+    let paramsBlock = fileContents.match(paramBlockRegex)[0];
+    return _.map(_.rest(paramsBlock.match(paramLineRegexGlobal)), param => {
+      return param.match(paramLineRegex)[1];
     });
   }
 
@@ -175,12 +177,13 @@ export class Generator {
     let constructorBodyTemplate: string = '\tbeforeEach(inject(function (_{0}_) {\n\t\t{0} = _{0}_\n\t}));';
     let constructorControllerBodyTemplate: string = "\tbeforeEach(inject(function ($rootScope, $controller) {\n\t\tscope = $rotScope.$new();\n\t\t$controller('{0}', {\n\t\t\t$scope: scope\n\t\t});\n\t}));";
     let constructorDirectiveBodyTemplate: string = "\tbeforeEach(inject(function ($rootScope, $compile) {\n\t\tvar template = '<{0} {1}></{0}>';\n\t\tvar directive = $compile(template)($rootScope);\n\t\t$rootScope.$digest();\n\t\tscope = directive.isolateScope()\n\t}));";
+    let directiveParamTemplate = '{0}=""';
 
     switch (injections.componentType) {
       case 'directive':
         let directiveParams = this.getDirectiveParams(fileContents);
         let directiveParamAssignments = _.map(directiveParams, directiveParam => {
-          return '{0}=""'.formatUnicorn(directiveParam);
+          return directiveParamTemplate.formatUnicorn(directiveParam);
         });
         let directiveTemplateBody = _.reduce(directiveParamAssignments, (aggregate, paramAssignment) => {
           return this.spacelineListTemplate.formatUnicorn(aggregate, paramAssignment);
