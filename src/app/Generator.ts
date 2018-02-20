@@ -37,7 +37,7 @@ export class Generator {
     let describes = this.getDescribes(methods);
 
     let declarations = _.reduce(_.map(_.compact([provideDeclarations, promiseDeclarations, constructorDeclaration]), declarationGroup => {
-      return this.indentTemplate.formatUnicorn(declarationGroup;
+      return this.indentTemplate.formatUnicorn(declarationGroup);
     }), (aggregate, declarationGroup) => {
       return this.newlineListTemplate.formatUnicorn(aggregate, declarationGroup);
     });
