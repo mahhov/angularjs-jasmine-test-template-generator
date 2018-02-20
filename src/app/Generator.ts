@@ -12,7 +12,7 @@ export class Generator {
 
   public generateTemplate(fileContents: string): string {
     let whitespaceRegex = /\s/g;
-    let testTemplate: string = "'use strict';\n\ndescribe('{0}', function () {\n\t{1}\n\n\t{2}\n\n{3}\n\n{4}\n\n{5}\n\n{6}\n});";
+    let testTemplate: string = "'use strict';\n\ndescribe('{0}', function () {\n{1}\n\n\t{2}\n\n{3}\n\n{4}\n\n{5}\n\n{6}\n});";
 
     if (!fileContents)
       return;
@@ -36,8 +36,10 @@ export class Generator {
     let constructorBody = this.getConstructorBody(fileContents, injections);
     let describes = this.getDescribes(methods);
 
-    let declarations = _.reduce([provideDeclarations, promiseDeclarations, constructorDeclaration], (aggregate, declarations) => {
-      return this.newlineListTemplate.formatUnicorn(aggregate, this.indentTemplate.formatUnicorn(declarations));
+    let declarations = _.reduce(_.map(_.compact([provideDeclarations, promiseDeclarations, constructorDeclaration]), declarations => {
+      return this.indentTemplate.formatUnicorn(declarations;
+    }), (aggregate, declarations) => {
+      return this.newlineListTemplate.formatUnicorn(aggregate, declarations);
     });
 
     return testTemplate.formatUnicorn(injections.name, declarations, module, provideBody, promiseBody, constructorBody, describes);
