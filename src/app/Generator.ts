@@ -12,7 +12,7 @@ export class Generator {
 
   public generateTemplate(fileContents: string): string {
     let whitespaceRegex = /\s/g;
-    let testTemplate: string = "'use strict';\n\ndescribe('{0}', function () {\n{1}\n\n\t{2}\n\n{3}\n\n{4}\n});";
+    let testTemplate: string = "'use strict';\n\ndescribe('{0}', function () {\n{1}\n\n\t{2}\n\n{3}\n});";
 
     if (!fileContents)
       return;
@@ -42,13 +42,11 @@ export class Generator {
       return this.newlineListTemplate.formatUnicorn(aggregate, declarationGroup);
     });
 
-    let bodies = _.reduce(_.map(_.compact([provideBody, promiseBody, constructorBody]), body => {
-      return body;
-    }), (aggregate, body) => {
+    let bodies = _.reduce(_.compact(_.union([provideBody, promiseBody, constructorBody], describes)), (aggregate, body) => {
       return this.doubleNewlineListTemplate.formatUnicorn(aggregate, body);
     });
 
-    return testTemplate.formatUnicorn(injections.name, declarations, module, bodies, describes);
+    return testTemplate.formatUnicorn(injections.name, declarations, module, bodies);
   }
 
   private getInjections(fileContents: string) {
@@ -218,10 +216,8 @@ export class Generator {
   private getDescribes(methods) {
     let describeTemplate: string = "\tdescribe('#{0}', function () {\n\t});";
 
-    return _.reduce(_.map(methods, (method) => {
+    return _.map(methods, method => {
       return describeTemplate.formatUnicorn(method);
-    }), (aggregate, describe) => {
-      return this.doubleNewlineListTemplate.formatUnicorn(aggregate, describe);
     });
   }
 }
