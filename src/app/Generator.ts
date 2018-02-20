@@ -12,7 +12,7 @@ export class Generator {
 
   public generateTemplate(fileContents: string): string {
     let whitespaceRegex = /\s/g;
-    let testTemplate: string = "'use strict';\n\ndescribe('{0}', function () {\n{1}\n\n\t{2}\n\n{3}\n\n{4}\n\n{5}\n\n{6}\n});";
+    let testTemplate: string = "'use strict';\n\ndescribe('{0}', function () {\n{1}\n\n\t{2}\n\n{3}\n\n{4}\n});";
 
     if (!fileContents)
       return;
@@ -36,13 +36,19 @@ export class Generator {
     let constructorBody = this.getConstructorBody(fileContents, injections);
     let describes = this.getDescribes(methods);
 
-    let declarations = _.reduce(_.map(_.compact([provideDeclarations, promiseDeclarations, constructorDeclaration]), declarations => {
-      return this.indentTemplate.formatUnicorn(declarations;
-    }), (aggregate, declarations) => {
-      return this.newlineListTemplate.formatUnicorn(aggregate, declarations);
+    let declarations = _.reduce(_.map(_.compact([provideDeclarations, promiseDeclarations, constructorDeclaration]), declarationGroup => {
+      return this.indentTemplate.formatUnicorn(declarationGroup;
+    }), (aggregate, declarationGroup) => {
+      return this.newlineListTemplate.formatUnicorn(aggregate, declarationGroup);
     });
 
-    return testTemplate.formatUnicorn(injections.name, declarations, module, provideBody, promiseBody, constructorBody, describes);
+    let bodies = _.reduce(_.map(_.compact([provideBody, promiseBody, constructorBody]), body => {
+      return body;
+    }), (aggregate, body) => {
+      return this.doubleNewlineListTemplate.formatUnicorn(aggregate, body);
+    });
+
+    return testTemplate.formatUnicorn(injections.name, declarations, module, bodies, describes);
   }
 
   private getInjections(fileContents: string) {
@@ -177,7 +183,7 @@ export class Generator {
     let promiseBody = _.reduce(promiseBodyLines, (aggregate, line) => {
       return this.doubleNewlineListTemplate.formatUnicorn(aggregate, line);
     });
-    return promiseTemplate.formatUnicorn(promiseBody);
+    return promiseBody && promiseTemplate.formatUnicorn(promiseBody);
   }
 
   private getConstructorDeclaration(injections) {
@@ -186,9 +192,9 @@ export class Generator {
   }
 
   private getConstructorBody(fileContents, injections) {
-    let constructorBodyTemplate: string = '\tbeforeEach(inject(function (_{0}_) {\n\t\t{0} = _{0}_\n\t}));';
+    let constructorBodyTemplate: string = '\tbeforeEach(inject(function (_{0}_) {\n\t\t{0} = _{0}_;\n\t}));';
     let constructorControllerBodyTemplate: string = "\tbeforeEach(inject(function ($rootScope, $controller) {\n\t\tscope = $rotScope.$new();\n\t\t$controller('{0}', {\n\t\t\t$scope: scope\n\t\t});\n\t}));";
-    let constructorDirectiveBodyTemplate: string = "\tbeforeEach(inject(function ($rootScope, $compile) {\n\t\tvar template = '<{0}{1}></{0}>';\n\t\tvar directive = $compile(template)($rootScope);\n\t\t$rootScope.$digest();\n\t\tscope = directive.isolateScope()\n\t}));";
+    let constructorDirectiveBodyTemplate: string = "\tbeforeEach(inject(function ($rootScope, $compile) {\n\t\tvar template = '<{0}{1}></{0}>';\n\t\tvar directive = $compile(template)($rootScope);\n\t\t$rootScope.$digest();\n\t\tscope = directive.isolateScope();\n\t}));";
     let directiveParamTemplate = '{0}=""';
     let leadingSpaceTemplate = ' {0}';
 
