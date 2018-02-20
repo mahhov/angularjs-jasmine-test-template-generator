@@ -8,10 +8,11 @@ export class Generator {
   private readonly doubleNewlineListTemplate: string = '{0}\n\n{1}';
   private readonly spacelineListTemplate: string = '{0} {1}';
   private readonly declarationTemplate: string = 'var {0};';
+  private readonly indentTemplate: string = '\t{0}';
 
   public generateTemplate(fileContents: string): string {
     let whitespaceRegex = /\s/g;
-    let testTemplate: string = "'use strict';\n\ndescribe('{0}', function () {\n\t{1}\n\t{2}\n\t{3}\n\n\t{4}\n\n{5}\n\n{6}\n\n{7}\n\n{8}\n});";
+    let testTemplate: string = "'use strict';\n\ndescribe('{0}', function () {\n\t{1}\n\n\t{2}\n\n{3}\n\n{4}\n\n{5}\n\n{6}\n});";
 
     if (!fileContents)
       return;
@@ -35,7 +36,11 @@ export class Generator {
     let constructorBody = this.getConstructorBody(fileContents, injections);
     let describes = this.getDescribes(methods);
 
-    return testTemplate.formatUnicorn(injections.name, provideDeclarations, promiseDeclarations, constructorDeclaration, module, provideBody, promiseBody, constructorBody, describes);
+    let declarations = _.reduce([provideDeclarations, promiseDeclarations, constructorDeclaration], (aggregate, declarations) => {
+      return this.newlineListTemplate.formatUnicorn(aggregate, this.indentTemplate.formatUnicorn(declarations));
+    });
+
+    return testTemplate.formatUnicorn(injections.name, declarations, module, provideBody, promiseBody, constructorBody, describes);
   }
 
   private getInjections(fileContents: string) {
@@ -157,7 +162,7 @@ export class Generator {
       return this.commaListTemplate.formatUnicorn(aggregate, declaration);
     });
 
-    return this.declarationTemplate.formatUnicorn(declarationBody);
+    return declarationBody && this.declarationTemplate.formatUnicorn(declarationBody);
   }
 
   private getPromiseBody(promises) {
