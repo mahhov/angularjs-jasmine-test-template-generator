@@ -139,7 +139,7 @@ export class Generator {
     let declarationBody = _.reduce(names, (aggregate, name) => {
       return this.commaListTemplate.formatUnicorn(aggregate, name);
     });
-    return this.declarationTemplate.formatUnicorn(declarationBody);
+    return declarationBody && this.declarationTemplate.formatUnicorn(declarationBody);
   }
 
   private getProvideBody(injections) {
@@ -162,7 +162,7 @@ export class Generator {
     let provideBody = _.reduce(provideBodyLines, (aggregate, line) => {
       return this.newlineListTemplate.formatUnicorn(aggregate, line);
     });
-    return provideTemplate.formatUnicorn(provideBody);
+    return provideBody && provideTemplate.formatUnicorn(provideBody);
   }
 
   private getPromiseDeclarations(promises) {
