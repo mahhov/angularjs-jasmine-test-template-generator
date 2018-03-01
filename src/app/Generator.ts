@@ -53,7 +53,7 @@ export class Generator {
     let declarationRegex = /angular\.module\('(\w+).(\w+)'\)\.(\w+)\('(\w+)',function\((.*?)\)/;
     let moduleNameTemplate: string = '{0}.{1}';
     let serviceNameTemplate: string = '{0}{1}';
-    let commaSplitRegex = /(\w+)/g;
+    let commaSplitRegex = /(\$?\w+)/g;
     let invocationsRegexTemplate: string = '{0}\\.\\w+\\(';
     let promiseInvocationRegexTemplate: string = '{0}\\.{1}\\([\\w,]*\\)\\.then\\(';
     let methodRegex = /\.(\w+)/;
